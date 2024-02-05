@@ -1,0 +1,208 @@
+{
+  "aggs": {
+    "3": {
+      "terms": {
+        "field": "MachineAttrGLIDEIN_DUNESite0",
+        "size": 50,
+        "order": {
+          "1": "desc"
+        }
+      },
+      "aggs": {
+        "1": {
+          "sum": {
+            "field": "SlotHours"
+          }
+        },
+        "5": {
+          "date_histogram": {
+            "field": "@timestamp",
+            "interval": "1d",
+            "time_zone": "America/Chicago",
+            "min_doc_count": 1
+          },
+          "aggs": {
+            "4": {
+              "filters": {
+                "filters": {
+                  "Analysis": {
+                    "query_string": {
+                      "query": "NOT(Owner:dunepro) AND NOT(Jobsub_SubGroup:mars)",
+                      "analyze_wildcard": true,
+                      "default_field": "*"
+                    }
+                  },
+                  "Production": {
+                    "query_string": {
+                      "query": "Owner:dunepro",
+                      "analyze_wildcard": true,
+                      "default_field": "*"
+                    }
+                  },
+                  "MARS": {
+                    "query_string": {
+                      "query": "Jobsub_SubGroup:mars",
+                      "analyze_wildcard": true,
+                      "default_field": "*"
+                    }
+                  },
+                  "Total": {
+                    "query_string": {
+                      "query": "*",
+                      "analyze_wildcard": true,
+                      "default_field": "*"
+                    }
+                  }
+                }
+              },
+              "aggs": {
+                "1": {
+                  "sum": {
+                    "field": "SlotHours"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "size": 0,
+  "_source": {
+    "excludes": [
+      "Chirp*"
+    ]
+  },
+  "stored_fields": [
+    "*"
+  ],
+  "script_fields": {
+    "efficiency": {
+      "script": {
+        "source": "if (doc['CommittedTime'].value > 0) {\nreturn ((float)doc['RemoteUserCpu'].value+doc['RemoteSysCpu'].value)/(doc['CommittedTime'].value*doc['RequestCpus'].value);\n} else if (doc['RemoteWallClockTime'].value > 0) {\nreturn ((float)doc['RemoteUserCpu'].value+doc['RemoteSysCpu'].value)/(doc['RemoteWallClockTime'].value*doc['RequestCpus'].value);\n} \nreturn 0.0;",
+        "lang": "painless"
+      }
+    },
+    "stderr": {
+      "script": {
+        "source": "return \"https://landscape.fnal.gov/lens/view/job/\"+doc['JobsubJobId'].value+\"/stderr\";",
+        "lang": "painless"
+      }
+    },
+    "stdout": {
+      "script": {
+        "source": "return \"https://landscape.fnal.gov/lens/view/job/\"+doc['JobsubJobId'].value+\"/stdout\";",
+        "lang": "painless"
+      }
+    },
+    "slots": {
+      "script": {
+        "source": "float memslots=(float)doc['RequestMemory'].value/2048;\nfloat cpuslots=(float)doc['RequestCpus'].value;\nif (cpuslots > memslots) {\nreturn cpuslots;\n} else {\nreturn memslots;\n}",
+        "lang": "painless"
+      }
+    },
+    "stderr_test": {
+      "script": {
+        "source": "def dag = doc['JobsubParentJobId'].value;\nif (dag != null) {\n   def stderrpath = doc['Err'].value;\n   if (stderrpath != null) {\n      int lastSlashIndex = stderrpath.lastIndexOf('/');\n      if (lastSlashIndex > 0) {\n        return \"https://landscapeitb.fnal.gov/lens/view/job/\"+doc['JobsubParentJobId'].value+\"/\"+stderrpath.substring(lastSlashIndex+1);\n      }\n   }\n}\nreturn \"https://landscapeitb.fnal.gov/lens/view/job/\"+doc['JobsubJobId'].value+\"/stderr\";",
+        "lang": "painless"
+      }
+    },
+    "stdout_test": {
+      "script": {
+        "source": "def dag = doc['JobsubParentJobId'].value;\nif (dag != null) {\n   def stdoutpath = doc['Out'].value;\n   if (stdoutpath != null) {\n      int lastSlashIndex = stdoutpath.lastIndexOf('/');\n      if (lastSlashIndex > 0) {\n        return \"https://landscapeitb.fnal.gov/lens/view/job/\"+doc['JobsubParentJobId'].value+\"/\"+stdoutpath.substring(lastSlashIndex+1);\n      }\n   }\n}\nreturn \"https://landscapeitb.fnal.gov/lens/view/job/\"+doc['JobsubJobId'].value+\"/stdout\";",
+        "lang": "painless"
+      }
+    }
+  },
+  "docvalue_fields": [
+    {
+      "field": "@timestamp",
+      "format": "date_time"
+    },
+    {
+      "field": "CompletionDate",
+      "format": "date_time"
+    },
+    {
+      "field": "EnteredCurrentStatus",
+      "format": "date_time"
+    },
+    {
+      "field": "JobCurrentStartDate",
+      "format": "date_time"
+    },
+    {
+      "field": "JobCurrentStartExecutingDate",
+      "format": "date_time"
+    },
+    {
+      "field": "JobCurrentStartTransferOutputDate",
+      "format": "date_time"
+    },
+    {
+      "field": "JobFinishedHookDone",
+      "format": "date_time"
+    },
+    {
+      "field": "JobLastStartDate",
+      "format": "date_time"
+    },
+    {
+      "field": "JobStartDate",
+      "format": "date_time"
+    },
+    {
+      "field": "LastJobLeaseRenewal",
+      "format": "date_time"
+    },
+    {
+      "field": "LastMatchTime",
+      "format": "date_time"
+    },
+    {
+      "field": "LastRejMatchTime",
+      "format": "date_time"
+    },
+    {
+      "field": "QDate",
+      "format": "date_time"
+    },
+    {
+      "field": "x509UserProxyExpiration",
+      "format": "date_time"
+    }
+  ],
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "query_string": {
+            "query": "Jobsub_Group:dune",
+            "analyze_wildcard": true,
+            "default_field": "*"
+          }
+        },
+        {
+          "query_string": {
+            "query": "Jobsub_Group:dune",
+            "analyze_wildcard": true,
+            "default_field": "*"
+          }
+        },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": 1702237910032,
+              "lte": 1704829910032,
+              "format": "epoch_second"
+            }
+          }
+        }
+      ],
+      "filter": [],
+      "should": [],
+      "must_not": []
+    }
+  }
+}
