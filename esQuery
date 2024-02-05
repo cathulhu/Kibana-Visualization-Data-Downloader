@@ -27,7 +27,7 @@
                 "filters": {
                   "Analysis": {
                     "query_string": {
-                      "query": "NOT(Owner:dunepro) AND NOT(Jobsub_SubGroup:mars)",
+                      "query": "NOT(Owner:dunepro) AND NOT(AccountingGroup:group_dune.mars.*)",
                       "analyze_wildcard": true,
                       "default_field": "*"
                     }
@@ -41,7 +41,7 @@
                   },
                   "MARS": {
                     "query_string": {
-                      "query": "Jobsub_SubGroup:mars",
+                      "query": "AccountingGroup:group_dune.mars.*",
                       "analyze_wildcard": true,
                       "default_field": "*"
                     }
